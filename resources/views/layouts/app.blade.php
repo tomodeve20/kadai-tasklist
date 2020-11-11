@@ -20,15 +20,12 @@
                 <div class="collapse navbar-collapse" id="nav-bar">
                     <ul class="navbar-nav mr-auto"></ul>
                     <ul class="navbar-nav">
-                          {{-- メッセージ作成ページへのリンク --}}
-                        <li class="nav-item">{!! link_to_route('tasks.create', '新規タスクの投稿', [], ['class' => 'nav-link']) !!}</li>
+                                   {{-- リスト作成ページへのリンク --}}
+                <li class="nav-item">{!! link_to_route('tasks.create', '新規リストの投稿', [], ['class' => 'nav-link']) !!}</li>
                     </ul>
                 </div>
             </nav>
         </header>
-           
-             {{-- ナビゲーションバー --}}
-        @include('commons.navbar')
 
         <div class="container">
             @yield('content')
