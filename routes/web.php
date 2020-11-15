@@ -13,9 +13,9 @@
 
 // デフォルトのコメント部分は省略
 
-Route::get('/', 'TasksController@index');
-
-Route::resource('tasks', 'TasksController');
+Route::get('/', function () {
+    return view('welcome');
+});
 
 // ユーザ登録
 Route::get('signup', 'Auth\RegisterController@showRegistrationForm')->name('signup.get');
