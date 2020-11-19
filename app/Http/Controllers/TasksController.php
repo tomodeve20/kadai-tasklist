@@ -1,7 +1,11 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
+
 use App\Task;    // 追加
+
 class TasksController extends Controller
 {
     /**
@@ -9,15 +13,26 @@ class TasksController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-         // メッセージ一覧を取得
-        $tasks = Task::all();
-        // メッセージ一覧ビューでそれを表示
-        return view('tasks.index', [
-            'tasks' => $tasks,
-            ]);
+ public function index()
+{
+     $data = [];
+        if (\Auth::check()) { // 認証済みの場合
+            // 認証済みユーザを取得
+            $user = \Auth::user();
+            // ユーザの投稿の一覧を作成日時の降順で取得
+            $tasks = $user->tasks()->orderBy('created_at', 'desc')->paginate(10);
+
+            $data = [
+                'user' => $user,
+                'tasks' => $tasks,
+            ];
+        
+        }
+     
+        return view('tasks.index',$data);
     }
+
+     
     /**
      * Show the form for creating a new resource.
      *
@@ -26,32 +41,37 @@ class TasksController extends Controller
     public function create()
     {
         $task = new Task;
+
         // メッセージ作成ビューを表示
         return view('tasks.create', [
             'task' => $task,
         ]);
     }
+
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
-      */
-     public function store(Request $request)
-     {
-           // バリデーション
-         $request->validate([
-             'status' => 'required|max:10',   // 追加
-             'content' => 'required|max:10',
-         ]);
+     */
+       // 認証済みユーザ（閲覧者）の投稿として作成（リクエストされた値をもとに作成）
+ public function store(Request $request)
+    {
+          // バリデーション
+        $request->validate([
+            'status' => 'required|max:10',   // 追加
+            'content' => 'required|max:10',
+        ]);
+        
+         // メッセージを作成
+        $task = new Task;
+        $task->status = $request->status;    // 追加
+        $task->content = $request->content;
+        $task->user_id = \Auth::id();
+        $task->save();
 
-          // メッセージを作成
-         $task = new Task;
-         $task->status = $request->status;    // 追加
-         $task->content = $request->content;
-         $task->save();
 
-        // トップページへリダイレクトさせる
+         // トップページへリダイレクトさせる
         return redirect('/');//
     }
     /**
@@ -60,7 +80,7 @@ class TasksController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+  public function show($id)
     {
         // idの値でメッセージを検索して取得
         $task = Task::findOrFail($id);
@@ -79,36 +99,39 @@ class TasksController extends Controller
     {
          // idの値でメッセージを検索して取得
         $task = Task::findOrFail($id);
+
         // メッセージ編集ビューでそれを表示
         return view('tasks.edit', [
             'task' => $task,
         ]);
     }
+
     /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
-      */
-     public function update(Request $request, $id)
-     {
-           // バリデーション
-         $request->validate([
-             'status' => 'required|max:10',   // 追加
-             'content' => 'required|max:10',
-         ]);
-
-          // idの値でメッセージを検索して取得
-         $task = Task::findOrFail($id);
-         // メッセージを更新
-         $task->status = $request->status;    // 追加
-         $task->content = $request->content;
-         $task->save();
+     */
+    public function update(Request $request, $id)
+    {
+          // バリデーション
+        $request->validate([
+            'status' => 'required|max:10',   // 追加
+            'content' => 'required|max:10',
+        ]);
+        
+         // idの値でメッセージを検索して取得
+        $task = Task::findOrFail($id);
+        // メッセージを更新
+        $task->status = $request->status;    // 追加
+        $task->content = $request->content;
+        $task->save();
 
         // トップページへリダイレクトさせる
         return redirect('/');
     }
+
     /**
      * Remove the specified resource from storage.
      *
@@ -117,11 +140,15 @@ class TasksController extends Controller
      */
     public function destroy($id)
     {
-         // idの値でメッセージを検索して取得
-        $task = Task::findOrFail($id);
-        // メッセージを削除
-        $task->delete();
-        // トップページへリダイレクトさせる
-        return redirect('/');
+         // idの値で投稿を検索して取得
+        $task = \App\Task::findOrFail($id);
+
+        // 認証済みユーザ（閲覧者）がその投稿の所有者である場合は、投稿を削除
+        if (\Auth::id() === $task->user_id) {
+            $task->delete();
+        }
+
+  // トップページへリダイレクトさせる
+        return redirect('/');//
     }
 }
