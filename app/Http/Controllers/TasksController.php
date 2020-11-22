@@ -15,16 +15,14 @@ class TasksController extends Controller
      */
  public function index()
 {
-
-         // メッセージ一覧を取得
+ 
+       // メッセージ一覧を取得
         $tasks = Task::all();
-
-        // メッセージ一覧ビューでそれを表示
-        return view('tasks.index', [
+      // メッセージ一覧ビューでそれを表示
+        return view('welcome', [
             'tasks' => $tasks,
             ]);
-    }
-
+}
     /**
      * Show the form for creating a new resource.
      *
